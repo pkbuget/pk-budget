@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PK Budget vs Actual 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f0f2f5;color:#1a202c;font-size:12px;display:flex;flex-direction:column;}
+
+/* ── FIXED TOP SECTION ── */
+#topSection{flex-shrink:0;background:#f0f2f5;}
+
+/* SETUP BANNER */
+#setupBanner{background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:7px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+#setupBanner.hidden{display:none;}
+.setup-lbl{font-size:10px;color:#1d4ed8;white-space:nowrap;}
+.setup-inp{flex:1;min-width:240px;max-width:420px;background:#fff;border:1px solid #93c5fd;border-radius:5px;color:#1e3a8a;padding:5px 10px;font-size:11px;outline:none;font-family:'IBM Plex Mono',monospace;}
+.guide-link{font-size:10px;color:#2563eb;cursor:pointer;text-decoration:underline;}
+.sync-wrap{display:none;align-items:center;gap:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;}
+.sync-dot{width:6px;height:6px;border-radius:50%;}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:1px solid #e2e8f0;padding:11px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.hdr-eyebrow{font-size:9px;letter-spacing:.22em;color:#3b82f6;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.hdr h1{font-size:16px;font-weight:700;color:#1a202c;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif;transition:all .15s;}
+.btn-blue{background:#3b82f6;color:#fff;}.btn-blue:hover{background:#2563eb;}
+.btn-out{background:#fff;color:#4b5563;border:1px solid #d1d5db;}.btn-out:hover{background:#f9fafb;}
+
+/* MONTH BAR */
+.month-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.month-bar-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;font-weight:600;}
+.month-btns{display:flex;gap:3px;flex-wrap:wrap;}
+.mb{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;border-radius:5px;padding:4px 11px;font-size:10px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
+.mb:hover{background:#e5e7eb;color:#374151;}
+.mb.active{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+.mb.has-actual{border-color:#10b981;}
+.mb.active{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+.ytd-badge{font-size:10px;color:#1d4ed8;font-family:'IBM Plex Mono',monospace;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:4px 10px;white-space:nowrap;}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:10px 24px;}
+.sc{background:#fff;border:1px solid #e2e8f0;border-radius:9px;padding:11px 14px;}
+.sc-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;font-weight:600;}
+.sc-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.sc-sub{font-size:9px;color:#9ca3af;margin-top:1px;}
+
+/* CONTROLS BAR */
+.controls{padding:0 24px 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.search-wrap{position:relative;flex:1;min-width:180px;max-width:260px;}
+.search-wrap input{width:100%;background:#fff;border:1px solid #d1d5db;border-radius:7px;color:#374151;padding:6px 8px 6px 28px;font-size:11px;outline:none;font-family:'Noto Sans KR',sans-serif;}
+.search-wrap input:focus{border-color:#3b82f6;}
+.si{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:12px;pointer-events:none;}
+.flt{background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.flt.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+.dept-lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;font-weight:600;white-space:nowrap;}
+.dc{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:14px;padding:3px 11px;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.dc.on{background:#3b82f6;color:#fff;border-color:#3b82f6;font-weight:600;}
+.dc-ghost{background:transparent;color:#9ca3af;border:1px dashed #d1d5db;border-radius:14px;padding:3px 11px;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.dc-ghost:hover{border-color:#3b82f6;color:#3b82f6;}
+.dc-add-wrap{display:none;align-items:center;gap:4px;}
+.dc-add-wrap.open{display:flex;}
+.dc-add-inp{background:#fff;border:1px solid #3b82f6;border-radius:14px;color:#374151;padding:3px 10px;font-size:10px;outline:none;width:85px;font-family:'Noto Sans KR',sans-serif;}
+
+/* MISS ALERT */
+.miss-alert{margin:0 24px 8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:7px;padding:7px 12px;font-size:10px;color:#92400e;display:none;}
+
+/* ── SCROLLABLE CONTENT ── */
+#scrollContent{flex:1;overflow-y:auto;overflow-x:auto;padding:0 24px 40px;}
+
+/* TOAST */
+.toast{position:fixed;top:16px;right:16px;padding:9px 16px;border-radius:8px;font-weight:700;font-size:12px;z-index:9999;display:flex;align-items:center;gap:6px;box-shadow:0 4px 20px rgba(0,0,0,.15);pointer-events:none;}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:1200px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+
+/* THEAD STICKY within scroll container */
+thead tr th{position:sticky;background:#f8fafc;}
+.gh-row th{top:0;padding:6px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:none;text-align:center;z-index:20;}
+.gh-fixed{text-align:left!important;color:#6b7280;}
+.gh-total{background:#f0f9ff!important;color:#0369a1;}
+.gh-ytd{background:#f0fdf4!important;color:#166534;}
+.ch-row th{top:31px;padding:8px 10px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #e2e8f0;white-space:nowrap;letter-spacing:.02em;z-index:20;}
+.ch-row th.r{text-align:right;}
+.ch-row th.total-h{background:#f0f9ff!important;color:#0369a1;}
+.ch-row th.ytd-h{background:#f0fdf4!important;color:#166534;}
+
+/* ROWS */
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
+.io-row{background:#f8fafc;cursor:pointer;}
+.io-row:hover{background:#f1f5f9;}
+.io-row td{padding:9px 10px;font-size:11px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;}
+.io-expand{color:#94a3b8;font-size:10px;margin-right:5px;}
+.io-name-text{color:#334155;}
+.io-num-cell{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#475569;}
+.io-count{font-size:9px;color:#94a3b8;font-weight:400;margin-left:6px;}
+.item-row{background:#fff;cursor:pointer;}
+.item-row:hover{background:#f8faff;}
+.item-row.open-row{background:#eff6ff;}
+.item-row td{padding:7px 10px;font-size:11px;color:#374151;}
+.cmt-row td{padding:0;background:#f0f9ff;border-bottom:2px solid #bfdbfe;}
+td.r{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.num-zero{color:#d1d5db;}
+.c-over{color:#dc2626;font-weight:600;}
+.c-under{color:#059669;font-weight:600;}
+.c-neutral{color:#6b7280;}
+.total-col{background:#f0f9ff44;}
+.ytd-col{background:#f0fdf444;}
+.assign-cell{cursor:pointer;}
+.assign-name{font-size:11px;color:#334155;}
+.assign-pills{display:flex;gap:3px;margin-top:2px;flex-wrap:wrap;}
+.pill-miss{font-size:8px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:3px;padding:1px 5px;}
+.pill-cmt{font-size:8px;background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;border-radius:3px;padding:1px 5px;}
+.pct-badge{display:inline-block;font-size:9px;font-family:'IBM Plex Mono',monospace;border-radius:3px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
+.pct-over{background:#fee2e2;color:#dc2626;}
+.pct-under{background:#dcfce7;color:#059669;}
+.pct-ok{background:#e0f2fe;color:#0369a1;}
+
+/* COMMENT PANEL */
+.cmt-panel{padding:12px 16px 14px;}
+.cmt-existing{background:#fff;border-radius:7px;padding:9px 12px;margin-bottom:8px;border-left:3px solid #3b82f6;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.cmt-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;flex-wrap:wrap;gap:3px;}
+.cmt-dept{font-size:10px;font-weight:700;color:#2563eb;}
+.cmt-time{font-size:9px;color:#9ca3af;font-family:'IBM Plex Mono',monospace;}
+.cmt-btn{background:transparent;color:#9ca3af;border:none;font-size:11px;cursor:pointer;padding:1px 3px;}
+.cmt-btn:hover{color:#374151;}
+.cmt-text{font-size:11px;color:#4b5563;line-height:1.6;}
+.cmt-edit-ta{width:100%;background:#fff;border:1px solid #3b82f6;border-radius:5px;color:#374151;padding:7px;font-size:11px;resize:none;outline:none;font-family:'Noto Sans KR',sans-serif;margin-top:4px;}
+.cmt-edit-acts{display:flex;gap:4px;margin-top:5px;}
+.cmt-edit-save{background:#3b82f6;color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.cmt-edit-cancel{background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:5px;padding:4px 8px;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.cmt-new-lbl{font-size:10px;color:#6b7280;margin-bottom:5px;}
+.cmt-new-lbl span{color:#2563eb;font-weight:700;}
+.cmt-new-wrap{display:flex;gap:7px;align-items:flex-end;}
+.cmt-new-ta{flex:1;background:#fff;border:1px solid #d1d5db;border-radius:7px;color:#374151;padding:8px 10px;font-size:11px;resize:none;outline:none;font-family:'Noto Sans KR',sans-serif;}
+.cmt-new-ta:focus{border-color:#3b82f6;}
+.cmt-save{background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:11px;font-weight:600;cursor:pointer;height:38px;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;}
+.cmt-save:hover{background:#2563eb;}
+.cmt-save.saved{background:#10b981;}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- FIXED TOP -->
+<div id="topSection">
+
+  <!-- SHEETS CONNECT BAR - always visible -->
+  <div id="setupBanner" style="background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:7px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span style="font-size:10px;color:#1d4ed8;white-space:nowrap;font-weight:600;">🔗 Google Sheets 연동:</span>
+    <input class="setup-inp" id="scriptUrl" placeholder="Apps Script URL 붙여넣기 (https://script.google.com/macros/s/.../exec)"
+      style="flex:1;min-width:300px;max-width:500px;background:#fff;border:1px solid #93c5fd;border-radius:5px;color:#1e3a8a;padding:5px 10px;font-size:11px;outline:none;font-family:'IBM Plex Mono',monospace;"/>
+    <button class="btn btn-blue" style="padding:5px 14px;font-size:11px;" onclick="connectSheets()">연결</button>
+    <div id="syncWrap" style="display:none;align-items:center;gap:6px;font-size:11px;">
+      <span id="syncDot" style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#10b981;"></span>
+      <span id="syncTxt" style="color:#065f46;font-weight:600;"></span>
+      <button class="btn btn-out" style="padding:3px 9px;font-size:10px;" onclick="loadComments()">🔄 새로고침</button>
+      <button class="btn btn-out" style="padding:3px 9px;font-size:10px;color:#dc2626;border-color:#fca5a5;" onclick="disconnectSheets()">연결 해제</button>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-eyebrow">PK Korea · Internal Order · FY 2026</div>
+      <h1>Budget vs Actual</h1>
+    </div>
+    <div class="hdr-right">
+      <button class="btn btn-out" onclick="exportCSV()">⬇ CSV 내보내기</button>
+    </div>
+  </div>
+
+  <!-- MONTH BAR -->
+  <div class="month-bar">
+    <span class="month-bar-lbl">기준 월 (YTD):</span>
+    <div class="month-btns" id="monthBtns"></div>
+    <div class="ytd-badge" id="ytdBadge"></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary" id="summaryEl"></div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="si">🔍</span>
+      <input id="searchInput" placeholder="IO#, IO명, Assignment 검색..." oninput="applyFilter()"/>
+    </div>
+    <button class="flt on" id="f-all"     onclick="setFlt('all')">전체</button>
+    <button class="flt"    id="f-over"    onclick="setFlt('over')">예산 초과</button>
+    <button class="flt"    id="f-under"   onclick="setFlt('under')">예산 절감</button>
+    <button class="flt"    id="f-missing" onclick="setFlt('missing')">코멘트 미작성</button>
+    <span class="dept-lbl">부서:</span>
+    <div id="deptChips"></div>
+    <div class="dc-add-wrap" id="deptAddWrap">
+      <input class="dc-add-inp" id="deptAddInp" placeholder="부서명" onkeydown="deptKey(event)"/>
+      <button class="btn btn-blue" style="border-radius:14px;padding:3px 9px;font-size:10px;" onclick="addDept()">추가</button>
+      <button class="btn btn-out" style="border-radius:14px;padding:3px 7px;font-size:10px;" onclick="closeDeptAdd()">취소</button>
+    </div>
+    <button class="dc-ghost" id="deptAddBtn" onclick="openDeptAdd()">+ 부서 추가</button>
+  </div>
+
+  <!-- MISS ALERT -->
+  <div class="miss-alert" id="missAlert"></div>
+
+</div><!-- end topSection -->
+
+<!-- SCROLLABLE TABLE -->
+<div id="scrollContent">
+  <table id="mainTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+
+// ══════════════════════════════════════════════════
+// DATA
+// actual_m1 = Jan 2026 (col header "1")
+// actual_m2 = Feb 2026 (col header "2")
+// budget_monthly[0]=Jan ... [11]=Dec
+// ══════════════════════════════════════════════════
+const RAW=[{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"명절보너스","budget_monthly":[0,6900000,0,0,0,0,0,0,8100000,0,0,0],"budget_total":15000000,"actual_m1":0,"actual_m2":6600000,"actual_total":6600000},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-건강검진","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,8750000],"budget_total":8750000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-경조금","budget_monthly":[333335,333335,333335,333335,333335,333335,333335,333335,333335,333335,333335,333335],"budget_total":4000020,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-기타 (커피캡슐)","budget_monthly":[355003,355003,355003,355003,355003,355003,355003,355003,355003,355003,355003,355003],"budget_total":4260036,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-기타(웰컴키트)","budget_monthly":[0,0,100000,0,0,0,0,0,0,0,100000,100000],"budget_total":300000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-기타(채용건강검진)","budget_monthly":[0,0,80000,0,0,0,0,0,0,0,80000,80000],"budget_total":240000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-상조용품","budget_monthly":[33823,33823,33823,33823,33823,33823,33823,33823,33823,33823,33823,1050000],"budget_total":1422053,"actual_m1":27590,"actual_m2":27590,"actual_total":55180},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복리후생-출산축하금","budget_monthly":[0,0,0,0,0,0,0,0,0,0,300000,0],"budget_total":300000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"복지포인트","budget_monthly":[8100000,0,0,8100000,0,0,8100000,0,0,8100000,0,0],"budget_total":32400000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10039","name":"PK_EE_Benefit_General 복리후생","assignment":"회식비","budget_monthly":[1716667,516667,516667,1716667,516667,516667,1716667,516667,516667,1716667,516667,1716667],"budget_total":12200004,"actual_m1":1480900,"actual_m2":1551484,"actual_total":3032384},{"io":"10040","name":"PK_조직문화","assignment":"문화행사","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":192240,"actual_total":192240},{"io":"10040","name":"PK_조직문화","assignment":"신년회/송년회","budget_monthly":[360000,0,0,0,0,0,0,0,0,0,0,4800000],"budget_total":5160000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10040","name":"PK_조직문화","assignment":"장기근속","budget_monthly":[0,0,0,0,0,300000,0,1500000,0,0,0,0],"budget_total":1800000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10040","name":"PK_조직문화","assignment":"조직문화","budget_monthly":[0,0,720000,0,0,1200000,0,0,720000,0,0,0],"budget_total":2640000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10040","name":"PK_조직문화","assignment":"창립기념일","budget_monthly":[0,0,0,0,0,0,0,0,0,0,5600000,0],"budget_total":5600000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10041","name":"PK_EE_Training 교육","assignment":"기타","budget_monthly":[0,0,0,0,0,0,165000,0,0,0,0,0],"budget_total":165000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10041","name":"PK_EE_Training 교육","assignment":"노무교육","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":150000,"actual_total":150000},{"io":"10041","name":"PK_EE_Training 교육","assignment":"리더십 교육","budget_monthly":[0,150000,0,0,0,0,0,0,4500000,0,0,0],"budget_total":4650000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10041","name":"PK_EE_Training 교육","assignment":"법정의무교육","budget_monthly":[0,0,44000,0,364000,44000,0,0,100000,0,182000,364000],"budget_total":1098000,"actual_m1":199360,"actual_m2":431416,"actual_total":630776},{"io":"10041","name":"PK_EE_Training 교육","assignment":"직무교육","budget_monthly":[0,0,0,0,0,0,6555000,0,0,0,0,0],"budget_total":6555000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10042","name":"PK_Recruitment채용","assignment":"Remember","budget_monthly":[0,0,0,0,0,0,0,0,4500000,0,0,0],"budget_total":4500000,"actual_m1":367125,"actual_m2":367125,"actual_total":734250},{"io":"10042","name":"PK_Recruitment채용","assignment":"Search firm","budget_monthly":[0,0,0,0,27200000,0,0,0,0,0,0,0],"budget_total":27200000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10042","name":"PK_Recruitment채용","assignment":"채용 비용","budget_monthly":[0,0,616667,166667,166667,616667,166667,166667,616667,166667,166667,616667],"budget_total":3466670,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10042","name":"PK_Recruitment채용","assignment":"채용비용-ORP","budget_monthly":[40000,40000,40000,40000,40000,0,0,0,0,0,0,0],"budget_total":200000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10043","name":"PK_Sales_Entertainment-End user","assignment":"영업활동_고객 접대비","budget_monthly":[583333,583333,583333,583333,583333,583333,583333,583333,583333,583333,583333,583333],"budget_total":6999996,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10043","name":"PK_Sales_Entertainment-End user","assignment":"영업활동_기타","budget_monthly":[0,0,2500000,0,0,2500000,0,0,0,2000000,2000000,0],"budget_total":9000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10043","name":"PK_Sales_Entertainment-End user","assignment":"접대비-식사","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":186700,"actual_m2":56500,"actual_total":243200},{"io":"10044","name":"PK_Sales_Entertainment-Distributor","assignment":"영업활동_대리점 접대비","budget_monthly":[583333,583333,583333,583333,583333,583333,583333,583333,583333,583333,583333,583333],"budget_total":6999996,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10044","name":"PK_Sales_Entertainment-Distributor","assignment":"접대비-식사","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":345700,"actual_m2":159900,"actual_total":505600},{"io":"10045","name":"IO 10045 (판매수수료)","assignment":"판매수수료-서브원","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":4997,"actual_m2":86146,"actual_total":91143},{"io":"10045","name":"IO 10045 (판매수수료)","assignment":"판매수수료-코리아이플랫폼","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":743710,"actual_m2":539874,"actual_total":1283584},{"io":"10107","name":"PK_Sales&MKT_General","assignment":"학회","budget_monthly":[0,0,500000,500000,500000,500000,500000,500000,500000,500000,500000,500000],"budget_total":5000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Avante 5475","budget_monthly":[403700,403700,403700,403700,403700,403700,403700,403700,403700,403700,403700,403700],"budget_total":4844400,"actual_m1":403370,"actual_m2":403370,"actual_total":806740},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Benz 8509","budget_monthly":[1508000,1508000,1508000,1508000,1508000,1650000,1650000,1650000,1650000,1650000,1650000,1650000],"budget_total":19090000,"actual_m1":1508000,"actual_m2":1508000,"actual_total":3016000},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"IC CHARGEBACK","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":-600000,"actual_m2":-600000,"actual_total":-1200000},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Ins-Car, Lease Car","budget_monthly":[1007460,0,0,0,1939090,0,0,0,0,0,0,0],"budget_total":2946550,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Ins-Lease Car","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":161591,"actual_m2":161591,"actual_total":323182},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Sportage 2623","budget_monthly":[576180,576180,0,0,0,0,0,0,0,0,0,0],"budget_total":1152360,"actual_m1":576180,"actual_m2":576180,"actual_total":1152360},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Sportage 9017","budget_monthly":[522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060],"budget_total":6264720,"actual_m1":522060,"actual_m2":522060,"actual_total":1044120},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Sportage 9018","budget_monthly":[522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060],"budget_total":6264720,"actual_m1":522060,"actual_m2":522060,"actual_total":1044120},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Sportage 9019","budget_monthly":[522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060,522060],"budget_total":6264720,"actual_m1":522060,"actual_m2":522060,"actual_total":1044120},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"Starex 6720","budget_monthly":[206790,206790,206790,206790,206790,206790,206790,206790,206790,206790,206790,206790],"budget_total":2481480,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"개인차량 운행 정산","budget_monthly":[1300000,1300000,1300000,1300000,1400000,1400000,1400000,1400000,1400000,1400000,1400000,1400000],"budget_total":16400000,"actual_m1":1201026,"actual_m2":1198928,"actual_total":2399954},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"세차","budget_monthly":[402600,35000,35000,402600,35000,35000,402600,35000,35000,927600,560000,560000],"budget_total":3465400,"actual_m1":43000,"actual_m2":112800,"actual_total":155800},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"스마트링크","budget_monthly":[144000,144000,144000,132000,132000,132000,132000,132000,132000,132000,132000,132000],"budget_total":1620000,"actual_m1":145200,"actual_m2":141898,"actual_total":287098},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"유류비","budget_monthly":[1170000,1170000,1170000,1170000,1170000,1170000,1170000,1170000,1170000,1170000,1170000,1170000],"budget_total":14040000,"actual_m1":992534,"actual_m2":997981,"actual_total":1990515},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"자동차세","budget_monthly":[358570,0,0,0,0,0,0,350000,0,0,0,0],"budget_total":708570,"actual_m1":331380,"actual_m2":0,"actual_total":331380},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"적재물보험","budget_monthly":[253100,0,0,0,0,0,0,0,0,0,0,0],"budget_total":253100,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"주차","budget_monthly":[746000,746000,746000,746000,746000,746000,746000,746000,746000,746000,746000,746000],"budget_total":8952000,"actual_m1":1050500,"actual_m2":441550,"actual_total":1492050},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"차량 기타","budget_monthly":[1045834,1270834,1270834,1270834,1270834,1270834,1270834,1270834,1270834,1270834,1270834,1270834],"budget_total":15025008,"actual_m1":787532,"actual_m2":841353,"actual_total":1628885},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"차량 소모품","budget_monthly":[0,0,0,0,0,150000,0,0,0,0,0,50000],"budget_total":200000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"차량보조금","budget_monthly":[1750000,1750000,1750000,1750000,2000000,2000000,2000000,2000000,2000000,2000000,2000000,2000000],"budget_total":23000000,"actual_m1":2317742,"actual_m2":2350000,"actual_total":4667742},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"차량보조금(비과세)","budget_monthly":[200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000],"budget_total":2400000,"actual_m1":200000,"actual_m2":200000,"actual_total":400000},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"차량유지보수/수리","budget_monthly":[150000,650000,450000,150000,650000,450000,150000,650000,450000,150000,650000,180000],"budget_total":4730000,"actual_m1":593388,"actual_m2":0,"actual_total":593388},{"io":"10165","name":"PK_Car expense 개인/법인차량","assignment":"통행료","budget_monthly":[720000,720000,720000,720000,720000,720000,720000,720000,720000,720000,720000,720000],"budget_total":8640000,"actual_m1":698840,"actual_m2":513460,"actual_total":1212300},{"io":"10196","name":"PK_Sales&MKT_Internal meeting","assignment":"내부 교육, 회의, 워크샵","budget_monthly":[0,0,0,0,0,0,1500000,0,0,0,1500000,0],"budget_total":3000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10197","name":"PK_Application_Demo & Lab","assignment":"데모/실험실 운영 및 소모품비","budget_monthly":[0,0,4000000,1000000,500000,1500000,500000,500000,1500000,500000,0,1000000],"budget_total":11000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10201","name":"PK_MKT_Trade show","assignment":"KBMS 2026","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":3000000,"actual_total":3000000},{"io":"10201","name":"PK_MKT_Trade show","assignment":"심포지엄","budget_monthly":[0,0,0,0,0,0,0,0,0,15000000,0,0],"budget_total":15000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10201","name":"PK_MKT_Trade show","assignment":"전시","budget_monthly":[0,0,0,6000000,2000000,10000000,0,0,0,25000000,10000000,0],"budget_total":53000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10201","name":"PK_MKT_Trade show","assignment":"학회","budget_monthly":[0,10000000,0,3000000,3000000,3800000,3000000,11700000,0,4000000,0,0],"budget_total":38500000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10202","name":"PK_MKT_Brochure","assignment":"Brochure","budget_monthly":[0,0,5000000,0,5000000,5000000,0,0,5000000,0,0,0],"budget_total":20000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10203","name":"PK_MKT_Digital Marketing &Assets","assignment":"Digital 광고 및 Asset 구독/사용료","budget_monthly":[700000,1140000,6140000,9140000,9140000,6140000,8140000,6140000,6140000,9140000,6140000,6140000],"budget_total":74240000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10203","name":"PK_MKT_Digital Marketing &Assets","assignment":"S&M 일반","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":32814,"actual_total":32814},{"io":"10203","name":"PK_MKT_Digital Marketing &Assets","assignment":"광고","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":1071091,"actual_m2":455000,"actual_total":1526091},{"io":"10203","name":"PK_MKT_Digital Marketing &Assets","assignment":"카카오","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":19860,"actual_m2":9945,"actual_total":29805},{"io":"10205","name":"PK_Sales&MKT_Promotional material","assignment":"판촉물","budget_monthly":[0,0,1000000,1000000,2000000,1000000,2000000,1000000,1000000,1000000,1000000,0],"budget_total":11000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10206","name":"PK_Saes&MKT_Sample","assignment":"Sample","budget_monthly":[2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000],"budget_total":30000000,"actual_m1":2320630,"actual_m2":475670,"actual_total":2796300},{"io":"10207","name":"PK_Sales&MKT_Demo","assignment":"Demo","budget_monthly":[3333333,3333333,3333333,3333333,3333333,3333333,3333333,3333333,3333333,3333333,3333333,3333333],"budget_total":39999996,"actual_m1":1688024,"actual_m2":2979509,"actual_total":4667533},{"io":"10232","name":"PK_동호회","assignment":"동호회","budget_monthly":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000],"budget_total":3000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"Adobe Acrobat","budget_monthly":[649572,649572,649572,649572,649572,649572,649572,649572,649572,649572,649572,649572],"budget_total":7794864,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"Asana","budget_monthly":[1207680,1207680,1207680,1207680,1207680,1207680,1207680,1207680,1207680,1207680,1207680,1207680],"budget_total":14492160,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"Cloud Server","budget_monthly":[253584,253584,253584,253584,253584,253584,253584,253584,253584,253584,253584,253584],"budget_total":3043008,"actual_m1":225637,"actual_m2":225637,"actual_total":451274},{"io":"10266","name":"PK_Software/IT","assignment":"Flex","budget_monthly":[476003,476003,476003,476003,476003,476003,476003,476003,476003,476003,476003,476003],"budget_total":5712036,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"GMHID-Spectrum","budget_monthly":[55500,55500,55500,55500,55500,55500,55500,55500,55500,55500,55500,55500],"budget_total":666000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"Groupware","budget_monthly":[0,0,0,0,0,0,0,0,0,2326502,0,0],"budget_total":2326502,"actual_m1":170610,"actual_m2":170610,"actual_total":341220},{"io":"10266","name":"PK_Software/IT","assignment":"ICT miantenance","budget_monthly":[750000,0,0,750000,0,0,750000,0,0,750000,0,0],"budget_total":3000000,"actual_m1":667500,"actual_m2":0,"actual_total":667500},{"io":"10266","name":"PK_Software/IT","assignment":"Illustrator","budget_monthly":[59566,59566,59566,59566,59566,59566,59566,59566,59566,59566,59566,59566],"budget_total":714792,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"Photoshop","budget_monthly":[59566,59566,59566,59566,59566,59566,59566,59566,59566,59566,59566,59566],"budget_total":714792,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"SIGNOK","budget_monthly":[15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000],"budget_total":180000,"actual_m1":7832,"actual_m2":7832,"actual_total":15664},{"io":"10266","name":"PK_Software/IT","assignment":"Turbo license","budget_monthly":[18500,18500,18500,18500,18500,18500,18500,18500,18500,18500,18500,18500],"budget_total":222000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"WebEX","budget_monthly":[58564,58564,58564,58564,58564,58564,58564,58564,58564,58564,58564,58564],"budget_total":702768,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10266","name":"PK_Software/IT","assignment":"비품/소모품-컴퓨터","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":229086,"actual_m2":452948,"actual_total":682034},{"io":"10266","name":"PK_Software/IT","assignment":"한글오피스","budget_monthly":[67808,67808,67808,67808,67808,67808,67808,67808,67808,67808,67808,67808],"budget_total":813696,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10267","name":"PK_Office equipment 비품","assignment":"비품/소모품-컴퓨터","budget_monthly":[0,0,3000000,0,0,0,0,0,0,0,0,0],"budget_total":3000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10268","name":"PK_Office supplies 소모품","assignment":"명함","budget_monthly":[30000,0,90000,30000,0,90000,30000,0,90000,0,30000,90000],"budget_total":480000,"actual_m1":30000,"actual_m2":0,"actual_total":30000},{"io":"10268","name":"PK_Office supplies 소모품","assignment":"비품-파티션","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":1178805,"actual_total":1178805},{"io":"10268","name":"PK_Office supplies 소모품","assignment":"사무용품","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":109378,"actual_m2":0,"actual_total":109378},{"io":"10268","name":"PK_Office supplies 소모품","assignment":"사무용품/소모품","budget_monthly":[275003,2275006,275003,275003,275003,275003,275003,275003,275003,275003,275003,275003],"budget_total":5300039,"actual_m1":98390,"actual_m2":165044,"actual_total":263434},{"io":"10268","name":"PK_Office supplies 소모품","assignment":"유지보수-사무실","budget_monthly":[0,333348,333348,333348,333348,333348,0,333348,333348,333348,333348,333348],"budget_total":3333480,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Canteen-식기세척기","budget_monthly":[31728,31728,31728,31728,31728,31728,31728,31728,31728,31728,31728,31728],"budget_total":380736,"actual_m1":31727,"actual_m2":31727,"actual_total":63454},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Canteen-정수기","budget_monthly":[53551,53551,53551,53551,53551,53551,53551,53551,53551,53551,53551,53551],"budget_total":642612,"actual_m1":47655,"actual_m2":47655,"actual_total":95310},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"IC CHARGEBACK","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":-100000,"actual_m2":-100000,"actual_total":-200000},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Mobile","budget_monthly":[51750,51750,51750,51750,51750,51750,51750,51750,51750,51750,51750,51750],"budget_total":621000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Office clean","budget_monthly":[700003,700003,700003,700003,700003,700003,700003,700003,700003,700003,700003,700003],"budget_total":8400036,"actual_m1":609650,"actual_m2":609650,"actual_total":1219300},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Rent","budget_monthly":[20058498,20058498,20058498,20058498,20058498,20058498,20058498,20058498,20058498,20058498,20058498,20058498],"budget_total":240701976,"actual_m1":13112822,"actual_m2":13112822,"actual_total":26225644},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"SK_2025 10","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":-19299,"actual_m2":0,"actual_total":-19299},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"Telephone","budget_monthly":[300001,300001,300001,300001,300001,300001,300001,300001,300001,300001,300001,300001],"budget_total":3600012,"actual_m1":301274,"actual_m2":704621,"actual_total":1005895},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"관리비","budget_monthly":[4265737,4265737,4265737,4265737,4265737,4265737,4265737,4265737,4265737,4265737,4265737,4265737],"budget_total":51188844,"actual_m1":2615637,"actual_m2":2887875,"actual_total":5503512},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"사무실 보안","budget_monthly":[320003,320003,320003,320003,320003,320003,320003,320003,320003,320003,320003,320003],"budget_total":3840036,"actual_m1":209194,"actual_m2":209194,"actual_total":418388},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"유지보수-사무실","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"유지보수-청소","budget_monthly":[0,0,0,0,1500018,0,0,0,0,0,1500018,0],"budget_total":3000036,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"인터넷","budget_monthly":[71504,71504,71504,71504,71504,71504,71504,71504,71504,71504,71504,71504],"budget_total":858048,"actual_m1":57850,"actual_m2":57850,"actual_total":115700},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"조경","budget_monthly":[400003,400003,400003,400003,400003,400003,400003,400003,400003,400003,400003,400003],"budget_total":4800036,"actual_m1":125000,"actual_m2":125000,"actual_total":250000},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"통신기기 지원금","budget_monthly":[1580000,1580000,1580000,1580000,1580000,1580000,1580000,1580000,1580000,1580000,1580000,1580000],"budget_total":18960000,"actual_m1":1637097,"actual_m2":1550000,"actual_total":3187097},{"io":"10269","name":"PK_Workplace 시설/관리/통신","assignment":"프린터 리스","budget_monthly":[330000,330000,330000,330000,330000,330000,330000,330000,330000,330000,330000,330000],"budget_total":3960000,"actual_m1":212300,"actual_m2":212300,"actual_total":424600},{"io":"10270","name":"PK_Business Management 경영관리","assignment":"노무법인","budget_monthly":[175000,175000,175000,175000,175000,175000,175000,175000,175000,175000,175000,175000],"budget_total":2100000,"actual_m1":175000,"actual_m2":175000,"actual_total":350000},{"io":"10270","name":"PK_Business Management 경영관리","assignment":"법률 자문","budget_monthly":[0,0,625000,0,0,625000,0,0,625000,0,0,625000],"budget_total":2500000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10270","name":"PK_Business Management 경영관리","assignment":"법인균등할 주민세","budget_monthly":[0,0,0,0,0,0,0,0,0,0,62500,0],"budget_total":62500,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10270","name":"PK_Business Management 경영관리","assignment":"사원총회/법인등기","budget_monthly":[0,0,0,0,0,0,500000,0,0,0,0,0],"budget_total":500000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10270","name":"PK_Business Management 경영관리","assignment":"주민세 재산분","budget_monthly":[0,0,0,0,0,0,0,0,0,0,420500,0],"budget_total":420500,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10277","name":"PK_Sales_Dist. Meeting","assignment":"대리점 미팅 및 워크샵","budget_monthly":[0,0,0,0,0,0,1000000,0,0,0,0,0],"budget_total":1000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10278","name":"PK_Sales documentation","assignment":"보증보험","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":505730,"actual_m2":48480,"actual_total":554210},{"io":"10278","name":"PK_Sales documentation","assignment":"신용평가수수료","budget_monthly":[0,0,0,240000,0,0,0,0,0,0,0,0],"budget_total":240000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10278","name":"PK_Sales documentation","assignment":"영업비_계약관련 서류","budget_monthly":[0,0,0,500000,500000,0,500000,0,0,0,250000,250000],"budget_total":2000000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10279","name":"PK_Sales Operation Expense","assignment":"스마트워크","budget_monthly":[0,0,0,0,0,0,0,0,0,0,0,0],"budget_total":0,"actual_m1":166300,"actual_m2":125900,"actual_total":292200},{"io":"10279","name":"PK_Sales Operation Expense","assignment":"영업비_스마트 워크, 영업 예비비","budget_monthly":[200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000],"budget_total":2400000,"actual_m1":0,"actual_m2":0,"actual_total":0},{"io":"10282","name":"PK_Service_Tools","assignment":"서비스 툴 구매 및 검교정","budget_monthly":[0,0,0,0,0,0,6000000,0,0,0,0,0],"budget_total":6000000,"actual_m1":0,"actual_m2":0,"actual_total":0}];
+
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const ACTUAL_IDX=[0,1]; // Jan=0, Feb=1 have actual data
+
+// ══ STATE ══
+const SCRIPT_KEY='pk_v4_script';
+let scriptUrl=localStorage.getItem(SCRIPT_KEY)||'';
+let connected=false;
+let selMonth=1; // default Feb
+let departments=['HR팀','영업팀','마케팅팀','재무팀','IT팀','기타'];
+let activeDept=departments[0];
+let comments={};
+let openIOs=new Set(); // collapsed by default
+let openRows=new Set();
+let editState=null;
+let drafts={};
+let savedState={};
+let fltMode='all';
+let searchQ='';
+
+// ══ UTILS ══
+const fmt=n=>{if(n===0)return '-';return new Intl.NumberFormat('ko-KR').format(Math.round(n));};
+const fmtN=n=>new Intl.NumberFormat('ko-KR').format(Math.round(n));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const escA=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+const ckey=(io,a)=>`${io}||${a}`;
+const getCmts=(io,a)=>comments[ckey(io,a)]||[];
+const budgetYTD=r=>r.budget_monthly.slice(0,selMonth+1).reduce((s,v)=>s+v,0);
+const actualYTD=r=>{let s=0;if(selMonth>=0)s+=r.actual_m1;if(selMonth>=1)s+=r.actual_m2;return s;};
+
+function pctBadge(actual, budget, label='') {
+  if(budget===0) return actual>0?`<span class="pct-badge pct-over">+∞%</span>`:'';
+  const p = (actual/budget*100);
+  const cls = p>105?'pct-over':p<95?'pct-under':'pct-ok';
+  return `<span class="pct-badge ${cls}">${p.toFixed(0)}%</span>`;
+}
+
+function toast(msg,err=false){
+  const el=document.getElementById('toast');
+  el.textContent=(err?'🗑 ':'✓ ')+msg;
+  el.style.cssText=`display:flex;background:${err?'#fca5a5':'#6ee7b7'};color:#1a202c;`;
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2200);
+}
+
+// ══ GOOGLE SHEETS ══
+// CORS-safe fetch using no-cors + form trick for local file://
+async function apiGet(action) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    window[cbName] = (data) => {
+      resolve(data);
+      document.head.removeChild(script);
+      delete window[cbName];
+    };
+    script.onerror = () => reject(new Error('Script load error'));
+    script.src = `${scriptUrl}?action=${action}&callback=${cbName}`;
+    document.head.appendChild(script);
+    setTimeout(() => reject(new Error('Timeout')), 10000);
+  });
+}
+
+async function apiPost(body) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.name = 'hidden_' + Date.now();
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = scriptUrl;
+    form.target = iframe.name;
+    form.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(body);
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    iframe.onload = () => {
+      resolve({ success: true });
+      setTimeout(() => {
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
+    form.submit();
+    setTimeout(() => resolve({ success: true }), 3000);
+  });
+}
+
+async function loadComments(){
+  if(!connected)return;
+  setSyncStatus('syncing');
+  try{
+    const data=await apiGet('getComments');
+
+    // 응답이 비어있거나 오류면 기존 코멘트 유지
+    if(!data || data.error || !Array.isArray(data)){
+      setSyncStatus('err');
+      toast('서버 응답 오류 - 기존 코멘트 유지', true);
+      return;
+    }
+
+    // 기존 로컬 코멘트 전체 백업
+    const backup = JSON.parse(JSON.stringify(comments));
+
+    // 서버 데이터로 새 comments 구성
+    const fresh = {};
+    data.forEach(c=>{
+      const k=ckey(c.io,c.assignment);
+      if(!fresh[k])fresh[k]=[];
+      fresh[k].push({dept:c.dept,text:c.text,time:c.time,_row:c._row});
+    });
+
+    // 로컬에만 있는 코멘트(아직 서버에 미반영) 병합
+    Object.keys(backup).forEach(k=>{
+      backup[k].forEach(lc=>{
+        const inFresh = fresh[k] && fresh[k].some(sc=>
+          sc.text===lc.text && sc.dept===lc.dept
+        );
+        if(!inFresh){
+          if(!fresh[k])fresh[k]=[];
+          fresh[k].push(lc);
+        }
+      });
+    });
+
+    comments = fresh;
+    setSyncStatus('ok');
+    render();
+  }catch(e){
+    // 오류 시 기존 코멘트 절대 지우지 않음
+    setSyncStatus('err');
+    toast('새로고침 실패 - 기존 코멘트 유지됩니다', true);
+  }
+}
+
+function connectSheets(){
+  const url=document.getElementById('scriptUrl').value.trim();
+  if(!url.includes('script.google.com')){toast('올바른 URL을 입력해주세요',true);return;}
+  scriptUrl=url;localStorage.setItem(SCRIPT_KEY,url);connected=true;
+  document.getElementById('syncWrap').style.display='flex';
+  document.getElementById('scriptUrl').style.borderColor='#86efac';
+  loadComments();
+  // 30초마다 자동 동기화 시작
+  if(!window._syncTimer){
+    window._syncTimer = setInterval(()=>{ if(connected) loadComments(); }, 30000);
+  }
+}
+function skipSetup(){} // kept for compatibility
+function setSyncStatus(s){
+  const dot=document.getElementById('syncDot'),txt=document.getElementById('syncTxt');
+  if(s==='ok'){
+    dot.style.background='#10b981';
+    txt.style.color='#065f46';
+    const now=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    txt.textContent='연결됨 ('+now+' 동기화)';
+  }
+  else if(s==='syncing'){dot.style.background='#f59e0b';txt.style.color='#92400e';txt.textContent='동기화 중...';}
+  else{dot.style.background='#ef4444';txt.style.color='#991b1b';txt.textContent='연결 오류';}
+}
+function showGuideAlert(){alert('구글 시트 설정:\n1. 시트명: comments\n2. 헤더: io | assignment | dept | text | time\n3. Apps Script → 배포 → 웹앱 → 모든 사용자');}
+function disconnectSheets(){
+  localStorage.removeItem(SCRIPT_KEY);
+  scriptUrl=''; connected=false;
+  document.getElementById('syncWrap').style.display='none';
+  document.getElementById('scriptUrl').value='';
+  toast('연결이 해제됐습니다.');
+}
+
+// ══ MONTH ══
+function renderMonthBtns(){
+  document.getElementById('monthBtns').innerHTML=MONTHS.map((m,i)=>{
+    const ha=ACTUAL_IDX.includes(i)?' has-actual':'';
+    const ac=i===selMonth?' active':'';
+    return `<button class="mb${ac}${ha}" onclick="setMonth(${i})">${m}</button>`;
+  }).join('');
+  document.getElementById('ytdBadge').textContent=`YTD: Jan → ${MONTHS[selMonth]} (${selMonth+1}개월 누적)`;
+}
+function setMonth(i){selMonth=i;renderMonthBtns();render();}
+
+// ══ FILTER ══
+function visibleRows(){
+  const q=searchQ.toLowerCase();
+  return RAW.filter(r=>{
+    if(q&&!r.io.includes(q)&&!r.name.toLowerCase().includes(q)&&!r.assignment.toLowerCase().includes(q))return false;
+    const aY=actualYTD(r),bY=budgetYTD(r);
+    if(fltMode==='missing')return(r.actual_total||r.budget_total)&&getCmts(r.io,r.assignment).length===0;
+    if(fltMode==='over')return aY>bY;
+    if(fltMode==='under')return aY<bY&&bY>0;
+    return true;
+  });
+}
+function setFlt(m){fltMode=m;['all','over','under','missing'].forEach(x=>document.getElementById('f-'+x).classList.toggle('on',x===m));render();}
+function applyFilter(){searchQ=document.getElementById('searchInput').value;render();}
+
+// ══ RENDER SUMMARY ══
+function renderSummary(){
+  const tBt=RAW.reduce((s,r)=>s+r.budget_total,0);
+  const tAt=RAW.reduce((s,r)=>s+r.actual_total,0);
+  const tBy=RAW.reduce((s,r)=>s+budgetYTD(r),0);
+  const tAy=RAW.reduce((s,r)=>s+actualYTD(r),0);
+  const tVy=tAy-tBy;
+  const tVt=tAt-tBt;
+  const miss=[...new Set(RAW.filter(r=>(r.actual_total||r.budget_total)&&getCmts(r.io,r.assignment).length===0).map(r=>r.io))].length;
+  const totalC=Object.values(comments).reduce((s,a)=>s+a.length,0);
+  const mn=MONTHS[selMonth];
+  document.getElementById('summaryEl').innerHTML=[
+    {l:'Budget Annual',v:fmtN(tBt),s:'원 (FY 2026)',c:'#2563eb'},
+    {l:`Budget YTD (${mn})`,v:fmtN(tBy),s:'원',c:'#0369a1'},
+    {l:`Actual YTD (${mn})`,v:fmtN(tAy),s:`${pctBadge(tAy,tBy,'YTD')}`,c:'#059669'},
+    {l:`YTD Variance`,v:(tVy>=0?'+':'')+fmtN(tVy),s:'원',c:tVy>0?'#dc2626':'#059669'},
+    {l:'Actual 누계',v:fmtN(tAt),s:`Jan+Feb ${pctBadge(tAt,tBt)}`,c:'#374151'},
+    {l:'코멘트 미작성',v:miss+'개 IO',s:'항목 포함',c:miss>0?'#d97706':'#059669'},
+    {l:'코멘트',v:totalC+'개',s:'작성됨',c:'#7c3aed'},
+  ].map(c=>`<div class="sc"><div class="sc-lbl">${c.l}</div><div class="sc-val" style="color:${c.c}">${c.v}</div><div class="sc-sub">${c.s}</div></div>`).join('');
+}
+
+// ══ RENDER TABLE ══
+function renderTable(){
+  const rows=visibleRows();
+  const mn=MONTHS[selMonth];
+
+  document.getElementById('tableHead').innerHTML=`
+    <tr class="gh-row">
+      <th class="gh-fixed" colspan="3" style="text-align:left;padding-left:14px;"></th>
+      <th class="gh-total" colspan="3" style="border-left:2px solid #bae6fd;">Annual Total</th>
+      <th class="gh-ytd" colspan="3" style="border-left:2px solid #bbf7d0;">YTD — Jan → ${mn}</th>
+    </tr>
+    <tr class="ch-row">
+      <th style="width:80px;padding-left:14px;">IO#</th>
+      <th style="min-width:190px;">Internal Order</th>
+      <th style="min-width:160px;">Assignment</th>
+      <th class="r total-h" style="width:120px;border-left:2px solid #bae6fd;">Budget</th>
+      <th class="r total-h" style="width:120px;">Actual (Jan+Feb)</th>
+      <th class="r total-h" style="width:120px;">Variance</th>
+      <th class="r ytd-h" style="width:110px;border-left:2px solid #bbf7d0;">Budget YTD</th>
+      <th class="r ytd-h" style="width:130px;">Actual YTD</th>
+      <th class="r ytd-h" style="width:120px;">Variance YTD</th>
+    </tr>`;
+
+  if(!rows.length){
+    document.getElementById('tableBody').innerHTML=`<tr><td colspan="9" style="text-align:center;padding:50px;color:#9ca3af;">검색 결과 없음</td></tr>`;
+    return;
+  }
+
+  // group by IO
+  const groups={};const ioOrder=[];
+  rows.forEach(r=>{
+    if(!groups[r.io]){groups[r.io]={name:r.name,rows:[]};ioOrder.push(r.io);}
+    groups[r.io].rows.push(r);
+  });
+
+  let html='';
+  ioOrder.forEach(io=>{
+    const g=groups[io];
+    const sBt=g.rows.reduce((s,r)=>s+r.budget_total,0);
+    const sAt=g.rows.reduce((s,r)=>s+r.actual_total,0);
+    const sByt=g.rows.reduce((s,r)=>s+budgetYTD(r),0);
+    const sAyt=g.rows.reduce((s,r)=>s+actualYTD(r),0);
+    const sVt=sAt-sBt, sVy=sAyt-sByt;
+    const cVt=sVt>0?'c-over':sVt<0?'c-under':'c-neutral';
+    const cVy=sVy>0?'c-over':sVy<0?'c-under':'c-neutral';
+    const isOpen=openIOs.has(io);
+    const cmtCount=g.rows.reduce((s,r)=>s+getCmts(r.io,r.assignment).length,0);
+    const missCount=g.rows.filter(r=>(r.actual_total||r.budget_total)&&getCmts(r.io,r.assignment).length===0).length;
+
+    // IO ROW (always visible, click to expand)
+    html+=`<tr class="io-row" onclick="toggleIO('${io}')">
+      <td style="padding-left:14px;" class="io-num-cell">${io}</td>
+      <td colspan="2">
+        <span class="io-expand">${isOpen?'▼':'▶'}</span>
+        <span class="io-name-text">${esc(g.name)}</span>
+        <span class="io-count">${g.rows.length}개 항목</span>
+        ${missCount>0?`<span class="pill-miss" style="margin-left:6px;">미작성 ${missCount}</span>`:''}
+        ${cmtCount>0?`<span class="pill-cmt" style="margin-left:4px;">💬 ${cmtCount}</span>`:''}
+      </td>
+      <td class="r total-col" style="border-left:2px solid #bae6fd;font-weight:700;">${fmtN(sBt)}</td>
+      <td class="r total-col" style="font-weight:700;">${fmtN(sAt)}&nbsp;${pctBadge(sAt,sBt)}</td>
+      <td class="r total-col ${cVt}">${(sVt>=0?'+':'')+fmtN(sVt)}</td>
+      <td class="r ytd-col" style="border-left:2px solid #bbf7d0;font-weight:700;">${fmtN(sByt)}</td>
+      <td class="r ytd-col" style="font-weight:700;">${fmtN(sAyt)}&nbsp;${pctBadge(sAyt,sByt)}</td>
+      <td class="r ytd-col ${cVy}">${(sVy>=0?'+':'')+fmtN(sVy)}</td>
+    </tr>`;
+
+    // ITEM ROWS (only shown if IO is open)
+    if(isOpen){
+      g.rows.forEach(r=>{
+        const k=ckey(r.io,r.assignment);
+        const bYv=budgetYTD(r),aYv=actualYTD(r);
+        const vT=r.actual_total-r.budget_total,vY=aYv-bYv;
+        const cVt2=vT>0?'c-over':vT<0?'c-under':'c-neutral';
+        const cVy2=vY>0?'c-over':vY<0?'c-under':'c-neutral';
+        const rc=getCmts(r.io,r.assignment);
+        const hasAct=r.budget_total||r.actual_total;
+        const isRowOpen=openRows.has(k);
+
+        html+=`<tr class="item-row${isRowOpen?' open-row':''}" id="tr_${esc(k)}" onclick="toggleRow('${escA(k)}')">
+          <td style="padding-left:28px;color:#9ca3af;font-size:10px;border-left:3px solid #e0f2fe;">↳</td>
+          <td></td>
+          <td class="assign-cell">
+            <div class="assign-name">${esc(r.assignment)}</div>
+            <div class="assign-pills">
+              ${rc.length>0?`<span class="pill-cmt">💬 ${rc.length}개</span>`:''}
+              ${hasAct&&rc.length===0?'<span class="pill-miss">⚠ 미작성</span>':''}
+            </div>
+          </td>
+          <td class="r total-col" style="border-left:2px solid #e0f2fe;">${fmt(r.budget_total)}</td>
+          <td class="r total-col">${fmt(r.actual_total)}&nbsp;${pctBadge(r.actual_total,r.budget_total)}</td>
+          <td class="r total-col ${cVt2}">${vT!==0?(vT>0?'+':'')+fmtN(vT):'-'}</td>
+          <td class="r ytd-col" style="border-left:2px solid #dcfce7;">${fmt(bYv)}</td>
+          <td class="r ytd-col">${fmt(aYv)}&nbsp;${pctBadge(aYv,bYv)}</td>
+          <td class="r ytd-col ${cVy2}">${vY!==0?(vY>0?'+':'')+fmtN(vY):'-'}</td>
+        </tr>`;
+
+        if(isRowOpen){
+          html+=`<tr class="cmt-row"><td colspan="9"><div class="cmt-panel">${renderCmtPanel(r,k,rc)}</div></td></tr>`;
+        }
+      });
+    }
+  });
+
+  document.getElementById('tableBody').innerHTML=html;
+}
+
+function renderCmtPanel(r,k,rc){
+  const cmts=rc.map((c,ci)=>{
+    const isEdit=editState?.key===k&&editState?.idx===ci;
+    return`<div class="cmt-existing">
+      <div class="cmt-meta">
+        <span class="cmt-dept">${esc(c.dept)}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="cmt-time">${esc(c.time)}</span>
+          <button class="cmt-btn" onclick="event.stopPropagation();startEdit('${escA(k)}',${ci})">✏️</button>
+          <button class="cmt-btn" onclick="event.stopPropagation();delCmt('${escA(k)}',${ci},${c._row||0})">🗑</button>
+        </div>
+      </div>
+      ${isEdit
+        ?`<textarea class="cmt-edit-ta" id="eta_${escA(k)}_${ci}" rows="2">${esc(c.text)}</textarea>
+           <div class="cmt-edit-acts">
+             <button class="cmt-edit-save" onclick="event.stopPropagation();saveEdit('${escA(k)}',${ci},${c._row||0})">저장</button>
+             <button class="cmt-edit-cancel" onclick="event.stopPropagation();cancelEdit()">취소</button>
+           </div>`
+        :`<div class="cmt-text">${esc(c.text)}</div>`}
+    </div>`;
+  }).join('');
+
+  return`<div style="font-size:9px;color:#6b7280;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">${esc(r.io)} · ${esc(r.assignment)}</div>
+    ${cmts}
+    <div class="cmt-new-lbl"><span>${esc(activeDept)}</span> 코멘트 작성</div>
+    <div class="cmt-new-wrap">
+      <textarea class="cmt-new-ta" id="ta_${escA(k)}" rows="2" placeholder="차이에 대한 설명을 입력하세요..." onclick="event.stopPropagation()">${esc(drafts[k]||'')}</textarea>
+      <button class="cmt-save${savedState[k]?' saved':''}" onclick="event.stopPropagation();saveCmt('${escA(k)}','${escA(r.io)}','${escA(r.assignment)}')">${savedState[k]?'✓ 저장됨':'저장'}</button>
+    </div>`;
+}
+
+// ══ MISS ALERT ══
+function renderMissAlert(){
+  const miss=[...new Set(RAW.filter(r=>(r.actual_total||r.budget_total)&&getCmts(r.io,r.assignment).length===0).map(r=>r.io))];
+  const el=document.getElementById('missAlert');
+  if(miss.length>0){el.style.display='block';el.innerHTML=`⚠️ 코멘트 미작성 IO: <strong>${miss.join(', ')}</strong>`;}
+  else el.style.display='none';
+}
+
+// ══ DEPTS ══
+function renderDepts(){
+  document.getElementById('deptChips').innerHTML=departments.map(d=>
+    `<button class="dc${d===activeDept?' on':''}" onclick="setDept('${escA(d)}')">${esc(d)}</button>`
+  ).join(' ');
+}
+
+// ══ ACTIONS ══
+function toggleIO(io){
+  openIOs.has(io)?openIOs.delete(io):openIOs.add(io);
+  renderTable();
+}
+
+function toggleRow(k){
+  const ta=document.getElementById('ta_'+k);
+  if(ta)drafts[k]=ta.value;
+  openRows.has(k)?openRows.delete(k):openRows.add(k);
+  editState=null;renderTable();
+}
+
+function setDept(d){activeDept=d;renderDepts();}
+
+async function saveCmt(k,io,assignment){
+  const ta=document.getElementById('ta_'+k);
+  const text=ta?ta.value.trim():'';
+  if(!text)return;
+  const time=new Date().toLocaleString('ko-KR');
+  if(!comments[k])comments[k]=[];
+  // 로컬에 즉시 추가 (화면 즉시 반영)
+  comments[k].push({dept:activeDept,text,time,_row:0});
+  drafts[k]='';savedState[k]=true;
+  renderTable();renderSummary();renderMissAlert();
+  toast('저장됐습니다.');
+  setTimeout(()=>{savedState[k]=false;renderTable();},1500);
+  // 구글 시트에 백그라운드 저장 (성공해도 화면 reload 안 함 - 깜빡임 방지)
+  if(connected){
+    try{
+      await apiPost({action:'addComment',io,assignment,dept:activeDept,text,time});
+      // 저장 성공 - 로컬 상태 유지, reload 하지 않음
+    }catch(e){
+      toast('⚠️ 서버 저장 실패 - 로컬에만 저장됨',true);
+    }
+  }
+}
+
+function startEdit(k,idx){editState={key:k,idx};renderTable();setTimeout(()=>document.getElementById(`eta_${k}_${idx}`)?.focus(),50);}
+function cancelEdit(){editState=null;renderTable();}
+
+async function saveEdit(k,idx,row){
+  const ta=document.getElementById(`eta_${k}_${idx}`);
+  const text=ta?ta.value.trim():'';
+  if(!text)return;
+  const newTime=comments[k][idx].time+' (수정됨)';
+  comments[k][idx]={...comments[k][idx],text,time:newTime};
+  editState=null;renderTable();toast('수정됐습니다.');
+  if(connected&&row>0)try{await apiPost({action:'editComment',row,text,time:newTime});}catch(e){}
+}
+
+async function delCmt(k,idx,row){
+  comments[k].splice(idx,1);
+  renderTable();renderSummary();renderMissAlert();toast('삭제됐습니다.',true);
+  // 로컬 즉시 반영, 서버는 백그라운드 처리
+  if(connected&&row>0)try{await apiPost({action:'deleteComment',row});}catch(e){}
+}
+
+function openDeptAdd(){document.getElementById('deptAddWrap').classList.add('open');document.getElementById('deptAddBtn').style.display='none';setTimeout(()=>document.getElementById('deptAddInp')?.focus(),50);}
+function closeDeptAdd(){document.getElementById('deptAddWrap').classList.remove('open');document.getElementById('deptAddBtn').style.display='';if(document.getElementById('deptAddInp'))document.getElementById('deptAddInp').value='';}
+function deptKey(e){if(e.key==='Enter')addDept();if(e.key==='Escape')closeDeptAdd();}
+function addDept(){const v=document.getElementById('deptAddInp').value.trim();if(!v||departments.includes(v))return;departments.push(v);activeDept=v;closeDeptAdd();renderDepts();}
+
+function exportCSV(){
+  const mn=MONTHS[selMonth];
+  const rows=['\uFEFFIO#,Internal Order,Assignment,Budget Annual,Actual(Jan+Feb),Variance Total,Budget YTD('+mn+'),Actual YTD('+mn+'),Variance YTD,부서,코멘트,작성시간'];
+  RAW.forEach(r=>{
+    const bY=budgetYTD(r),aY=actualYTD(r),vT=r.actual_total-r.budget_total,vY=aY-bY;
+    const rc=getCmts(r.io,r.assignment);
+    if(rc.length===0){rows.push(`"${r.io}","${r.name}","${r.assignment}",${r.budget_total},${r.actual_total},${vT},${bY},${aY},${vY},"","(미작성)",""`); }
+    else rc.forEach((c,i)=>rows.push(`"${i===0?r.io:''}","${i===0?r.name:''}","${i===0?r.assignment:''}",${i===0?r.budget_total:''},${i===0?r.actual_total:''},${i===0?vT:''},${i===0?bY:''},${i===0?aY:''},${i===0?vY:''},"${c.dept}","${c.text.replace(/"/g,'""')}","${c.time}"`));
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
+  a.download=`PK_BudgetActual_YTD${mn}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();toast('CSV 내보내기 완료!');
+}
+
+
+function updateStickyTop() {
+  const banner = document.getElementById('setupBanner');
+  const hdr = document.querySelector('.hdr');
+  const monthBar = document.querySelector('.month-bar');
+  const thead = document.querySelector('thead');
+  if (!thead) return;
+  
+  let top = 0;
+  if (banner && !banner.classList.contains('hidden')) {
+    top += banner.offsetHeight;
+  }
+  if (hdr) top += hdr.offsetHeight;
+  if (monthBar) top += monthBar.offsetHeight;
+  thead.style.top = top + 'px';
+}
+
+// Also update month-bar and hdr sticky tops
+function updateAllStickyTops() {
+  const banner = document.getElementById('setupBanner');
+  const hdr = document.querySelector('.hdr');
+  const monthBar = document.querySelector('.month-bar');
+  
+  let bannerH = (banner && !banner.classList.contains('hidden')) ? banner.offsetHeight : 0;
+  
+  if (hdr) hdr.style.top = bannerH + 'px';
+  if (monthBar) monthBar.style.top = (bannerH + (hdr ? hdr.offsetHeight : 0)) + 'px';
+  
+  updateStickyTop();
+}
+
+window.addEventListener('load', updateAllStickyTops);
+window.addEventListener('resize', updateAllStickyTops);
+
+// Patch connectSheets and skipSetup to recalculate
+const _origConnect = connectSheets;
+connectSheets = function() { _origConnect(); setTimeout(updateAllStickyTops, 100); };
+const _origSkip = skipSetup;
+skipSetup = function() { _origSkip(); setTimeout(updateAllStickyTops, 100); };
+
+// ══ INIT ══
+if(scriptUrl){
+  document.getElementById('scriptUrl').value=scriptUrl;
+  connected=true;
+  document.getElementById('syncWrap').style.display='flex';
+  document.getElementById('scriptUrl').style.borderColor='#86efac';
+  setSyncStatus('ok');
+  loadComments(); // 페이지 로드시 서버에서 최신 코멘트 불러옴
+  // 30초마다 자동 동기화
+  setInterval(()=>{ if(connected) loadComments(); }, 30000);
+}
+renderMonthBtns();
+
+function render(){renderSummary();renderMissAlert();renderDepts();renderTable();}
+render();
+
+</script>
+</body>
+</html>
