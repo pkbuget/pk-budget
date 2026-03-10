@@ -272,52 +272,42 @@ function toast(msg,err=false){
 }
 
 // ══ GOOGLE SHEETS ══
-// CORS-safe fetch using no-cors + form trick for local file://
+// GET-only API (CORS 문제 완전 해결)
 async function apiGet(action) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Date.now();
     const script = document.createElement('script');
     window[cbName] = (data) => {
       resolve(data);
-      document.head.removeChild(script);
+      if(document.head.contains(script)) document.head.removeChild(script);
       delete window[cbName];
     };
     script.onerror = () => reject(new Error('Script load error'));
-    script.src = `${scriptUrl}?action=${action}&callback=${cbName}`;
+    script.src = `${scriptUrl}?action=${action}&callback=${cbName}&t=${Date.now()}`;
     document.head.appendChild(script);
-    setTimeout(() => reject(new Error('Timeout')), 10000);
+    setTimeout(() => { reject(new Error('Timeout')); }, 15000);
   });
 }
 
 async function apiPost(body) {
+  // POST 대신 GET 파라미터로 전송 (CORS 우회)
   return new Promise((resolve, reject) => {
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hidden_' + Date.now();
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = scriptUrl;
-    form.target = iframe.name;
-    form.style.display = 'none';
-
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify(body);
-    form.appendChild(input);
-    document.body.appendChild(form);
-
-    iframe.onload = () => {
-      resolve({ success: true });
-      setTimeout(() => {
-        document.body.removeChild(form);
-        document.body.removeChild(iframe);
-      }, 1000);
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    window[cbName] = (data) => {
+      resolve(data);
+      if(document.head.contains(script)) document.head.removeChild(script);
+      delete window[cbName];
     };
-    form.submit();
-    setTimeout(() => resolve({ success: true }), 3000);
+    script.onerror = () => reject(new Error('Script load error'));
+    // URL 파라미터로 데이터 전송
+    const params = new URLSearchParams();
+    Object.keys(body).forEach(k => params.append(k, body[k]));
+    params.append('callback', cbName);
+    params.append('t', Date.now());
+    script.src = `${scriptUrl}?${params.toString()}`;
+    document.head.appendChild(script);
+    setTimeout(() => { resolve({success:true}); }, 15000);
   });
 }
 
